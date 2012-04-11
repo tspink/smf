@@ -1,0 +1,57 @@
+#
+# Makefile.build
+#
+__build:
+PHONY += __build
+
+# Normalise the source directory.
+src-dir			:= $(patsubst %/, %, $(src))
+built-in-target	:= $(src-dir)/$(built-in-name)
+
+# Include source makefile.
+-include $(src-dir)/Makefile
+
+real-obj-y		:= $(patsubst %, $(src-dir)/%, $(obj-y))
+real-dep-y		:= $(real-obj-y:%.o=%.d)
+real-cflags-y	:= -I$(INCDIR) $(cflags-y) $(global-cflags)
+real-ldflags-y	:= $(ldflags-y)
+real-subdirs-y	:= $(patsubst %, $(src-dir)/%, $(subdirs-y))
+real-subdirs-builtins-y := $(patsubst %/, %/$(built-in-name), $(real-subdirs-y))
+real-lds-y 		:= $(patsubst %, $(src-dir)/%,$(lds-y))
+real-ln-y		:= $(patsubst %, $(src-dir)/%, $(ln-y))
+
+ln-targets  	:= $(foreach LN,$(ln-y), $(DISTDIR)/$(notdir $(LN)))
+
+$(built-in-target): $(real-obj-y) $(real-subdirs-builtins-y)
+	$(Q)$(ECHO) "  LD      $(patsubst $(SRCDIR)/%,%,$@)"
+	$(Q)$(LD) -r -o $@ $(real-ldflags-y) $^
+
+$(real-subdirs-builtins-y): .FORCE
+	$(Q)$(MAKE) $(build)=$(dir $@)
+
+__build: $(real-dep-y) $(built-in-target) $(ln-targets)
+	$(null-cmd)
+	
+$(ln-targets): $(real-ln-y)
+	@$(foreach TGT, $^, echo "  LN      $(notdir $(TGT))"; ln -f -s $(TGT) $(DISTDIR)/$(notdir $(TGT));)
+
+%.o: %.c
+	$(Q)$(ECHO) "  CC      $(patsubst $(SRCDIR)/%,%,$@)"
+	$(Q)$(CC) -c -o $@ $(real-cflags-y) $<
+
+%.o: %.cpp
+	$(Q)$(ECHO) "  G++     $(patsubst $(SRCDIR)/%,%,$@)"
+	$(Q)$(CPLUS) -c -o $@ $(real-cflags-y) $<
+
+%.d: %.c
+	$(Q)$(ECHO) "  DEP     $(patsubst $(SRCDIR)/%,%,$@)"
+	$(Q)$(CC) -M -MT $(subst .d,.o,$@) -o $@ $(real-cflags-y) $<
+
+%.d: %.cpp
+	$(Q)$(ECHO) "  DEP     $(patsubst $(SRCDIR)/%,%,$@)"
+	$(Q)$(CC) -M -MT $(subst .d,.o,$@) -o $@ $(real-cflags-y) $<
+
+.FORCE:
+.PHONY: $(PHONY) .FORCE
+
+-include $(real-dep-y)

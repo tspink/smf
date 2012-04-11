@@ -1,0 +1,10 @@
+#
+# Makefile.tools
+#
+export CC		:= cc
+export LD		:= ld
+export RM		:= rm
+export ECHO		:= echo
+export MAKE		:= make
+export CP		:= cp
+export CPLUS	:= g++

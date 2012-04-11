@@ -1,0 +1,41 @@
+#
+# Makefile.clean
+#
+__clean:
+PHONY += __clean
+
+# Normalise the source directory.
+src-dir			:= $(src)
+built-in-target	:= $(src-dir)/$(built-in-name)
+
+# Include source makefile.
+-include $(src-dir)/Makefile
+
+real-obj-y		:= $(patsubst %, $(src-dir)/%, $(obj-y))
+real-dep-y		:= $(real-obj-y:%.o=%.d)
+real-subdirs-y	:= $(patsubst %, $(src-dir)/%, $(subdirs-y))
+clean-subdirs-y := $(patsubst %,__clean__%, $(real-subdirs-y))
+clean-obj-y		:= $(patsubst %,__clean__%, $(real-obj-y))
+clean-dep-y		:= $(patsubst %,__clean__%, $(real-dep-y))
+
+ln-targets  := $(foreach LN,$(ln-y), $(DISTDIR)/$(notdir $(LN)))
+clean-ln-y  := $(patsubst %,__clean__%, $(ln-targets))
+
+$(clean-obj-y) $(clean-dep-y): .FORCE
+	$(Q)$(ECHO) "  RM      $(patsubst $(SRCDIR)/%,%,$(patsubst __clean__%,%,$@))"
+	$(Q)$(RM) -f $(patsubst __clean__%,%,$@)
+
+$(clean-subdirs-y): .FORCE
+	$(Q)$(MAKE) $(clean)=$(patsubst __clean__%,%,$@)
+	
+$(clean-ln-y): .FORCE
+	$(Q)$(ECHO) "  RM      $(notdir $(patsubst __clean__%,%,$@))"
+	$(Q)$(RM) -f $(patsubst __clean__%,%,$@)
+
+__clean: $(clean-obj-y) $(clean-dep-y) $(clean-subdirs-y) $(clean-ln-y) .FORCE
+	$(Q)$(ECHO) "  RM      $(patsubst $(SRCDIR)/%,%,$(built-in-target))"
+	$(Q)$(RM) -f $(built-in-target)
+
+.FORCE:
+.PHONY: $(PHONY) .FORCE
+
