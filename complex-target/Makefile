@@ -13,8 +13,8 @@ PHONY += all default clean
 # Basic Variables
 export EXTRA_C_FLAGS	:= -g -O0
 export EXTRA_LD_FLAGS	:= 
-export Q				:= @
-export ARCH				?= $(shell uname -m)
+export Q		:= @
+export ARCH		?= $(shell uname -m)
 
 # Target platform size
 #ifeq ($(ARCH),x86_64)
@@ -40,7 +40,7 @@ export INCDIR	:= $(TOPDIR)/include
 -include $(build-config-file)
 
 # Target
-export targets-y 			:= 
+export targets-y		:= 
 export real-targets-y		:= $(patsubst %,$(DISTDIR)/%,$(targets-y))
 
 export main-target-builtin	:= $(SRCDIR)/$(built-in-name)
@@ -53,7 +53,7 @@ default-all: $(real-targets-y)
 	@echo "  Build Complete"
 	@echo
 
-$(targets-y): $(main-target-builtin)
+$(real-targets-y): $(main-target-builtin)
 	$(Q)$(ECHO) "  LD      $(notdir $@)"
 	$(Q)$(CC) -o $@ $(main-target-ldflags) $<
 
@@ -72,4 +72,3 @@ PHONY += default-all default-clean
 
 .FORCE:
 .PHONY: $(PHONY) .FORCE
-
