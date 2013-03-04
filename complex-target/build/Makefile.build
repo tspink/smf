@@ -6,23 +6,23 @@ PHONY += __build
 
 # Normalise the source directory.
 src-dir			:= $(patsubst %/, %, $(src))
-built-in-target	:= $(src-dir)/$(built-in-name)
+built-in-target		:= $(src-dir)/$(built-in-name)
 
 # Include source makefile.
 -include $(src-dir)/Makefile
 
 real-obj-y		:= $(patsubst %, $(src-dir)/%, $(obj-y))
 real-dep-y		:= $(real-obj-y:%.o=%.d)
-real-cflags-y	:= -I$(INCDIR) $(cflags-y) $(global-cflags)
-real-ldflags-y	:= $(ldflags-y)
-real-subdirs-y	:= $(patsubst %, $(src-dir)/%, $(subdirs-y))
+real-cflags-y		:= -I$(INCDIR) $(cflags-y) $(global-cflags)
+real-ldflags-y		:= $(ldflags-y)
+real-subdirs-y		:= $(patsubst %, $(src-dir)/%, $(subdirs-y))
 real-subdirs-builtins-y := $(patsubst %/, %/$(built-in-name), $(real-subdirs-y))
 real-lds-y 		:= $(patsubst %, $(src-dir)/%,$(lds-y))
 real-ln-y		:= $(patsubst %, $(src-dir)/%, $(ln-y))
 
-ln-targets  	:= $(foreach LN,$(ln-y), $(DISTDIR)/$(notdir $(LN)))
+ln-targets  		:= $(foreach LN,$(ln-y), $(DISTDIR)/$(notdir $(LN)))
 
-$(built-in-target): $(real-obj-y) $(real-subdirs-builtins-y)
+$(built-in-target): $(real-lds-y) $(real-obj-y) $(real-subdirs-builtins-y)
 	$(Q)$(ECHO) "  LD      $(patsubst $(SRCDIR)/%,%,$@)"
 	$(Q)$(LD) -r -o $@ $(real-ldflags-y) $^
 
